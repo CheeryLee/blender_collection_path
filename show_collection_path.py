@@ -26,21 +26,34 @@ font_size = 11
 font_dpi = 72
 font_id = 0
 font_shadow_alpha = 0.6
+version = bpy.app.version
 
 
 def draw_callback(self, context):
-    offset_x = 20
-    offset_y = bpy.context.region.height - 63
+    init_offset = get_init_display_offset()
+    offset_x = init_offset[0]
+    offset_y = bpy.context.region.height - init_offset[1]
     area = bpy.context.area
     tools_region = None
+    header_region = None
+
+    if area.spaces[0].overlay.show_overlays == False:
+        return
 
     for region in area.regions:
         if region.type == 'TOOLS':
             tools_region = region
-            break
+        elif region.type == 'HEADER':
+            header_region = region
+
+    if bpy.context.region.y != header_region.y:
+        offset_y -= header_region.height
 
     if area.spaces[0].show_region_toolbar and tools_region != None:
         offset_x += tools_region.width
+
+    if version >= (2, 90, 0) and area.spaces[0].overlay.show_stats:
+        offset_y -= 108
 
     blf.position(font_id, offset_x, offset_y, 0)
     blf.size(font_id, font_size, font_dpi)
@@ -48,6 +61,13 @@ def draw_callback(self, context):
     blf.shadow(font_id, 3, 0, 0, 0, font_shadow_alpha)
     blf.shadow_offset(font_id, 1, -2)
     blf.draw(font_id, get_collection_string(bpy.context.view_layer.objects.active))
+
+
+def get_init_display_offset() -> tuple:
+    if version >= (2, 80, 0) and version < (2, 90, 0):
+        return (20, 63)
+    elif version >= (2, 90, 0):
+        return (10, 58)
 
 
 def get_collection_string(obj) -> str:
