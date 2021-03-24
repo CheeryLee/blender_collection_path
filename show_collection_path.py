@@ -29,13 +29,33 @@ font_shadow_alpha = 0.6
 
 
 def draw_callback(self, context):
-    offset_y = 0
+    offset_x = 20
+    offset_y = bpy.context.region.height - 63
 
     for area in bpy.context.screen.areas:
-        if area.type == "VIEW_3D":
-            offset_y = area.height - 88
+        if area.type != "VIEW_3D":
+            continue
 
-    blf.position(font_id, 78, offset_y, 0)
+        current_area = None
+        tools_region = None
+
+        for region in area.regions:
+            if region.type == 'TOOLS':
+                tools_region = region
+
+            if region != bpy.context.region:
+                continue
+
+            current_area = area
+            break
+
+        if current_area == None:
+            continue
+
+        if current_area.spaces[0].show_region_toolbar and tools_region != None:
+            offset_x += tools_region.width
+
+    blf.position(font_id, offset_x, offset_y, 0)
     blf.size(font_id, font_size, font_dpi)
     blf.enable(font_id, blf.SHADOW)
     blf.shadow(font_id, 3, 0, 0, 0, font_shadow_alpha)
